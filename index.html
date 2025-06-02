@@ -1,0 +1,1314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CyberGuard - Advanced Cybercrime Mapping System</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --warning-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            --danger-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            
+            --bg-primary: #f8fafc;
+            --bg-secondary: #ffffff;
+            --text-primary: #2d3748;
+            --text-secondary: #4a5568;
+            --text-muted: #718096;
+            --border-light: #e2e8f0;
+            --border-medium: #cbd5e0;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12);
+            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+            --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+            --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.15);
+            --radius-sm: 6px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Navigation */
+        .navbar {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            z-index: 1000;
+            padding: 1rem 2rem;
+            box-shadow: var(--shadow-md);
+            transition: all 0.3s ease;
+        }
+
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            text-decoration: none;
+        }
+
+        .logo i {
+            margin-right: 0.5rem;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 2rem;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-weight: 500;
+            transition: color 0.3s ease;
+            position: relative;
+        }
+
+        .nav-links a:hover {
+            color: var(--text-primary);
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--primary-gradient);
+            transition: width 0.3s ease;
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 120px 2rem 60px;
+            background: var(--primary-gradient);
+            color: white;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+            opacity: 0.3;
+        }
+
+        .hero-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 2;
+        }
+
+        .hero-title {
+            font-size: 3.5rem;
+            font-weight: 900;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            animation: fadeInUp 1s ease-out;
+        }
+
+        .hero-subtitle {
+            font-size: 1.3rem;
+            opacity: 0.9;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+            animation: fadeInUp 1s ease-out 0.2s both;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Main Content */
+        .main-content {
+            background: white;
+            border-radius: 30px 30px 0 0;
+            margin-top: -30px;
+            min-height: 100vh;
+            position: relative;
+            box-shadow: var(--shadow-xl);
+        }
+
+        .content-container {
+            padding: 3rem 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 3rem;
+        }
+
+        .map-section {
+            background: var(--bg-primary);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            box-shadow: var(--shadow-md);
+        }
+
+        .section-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .section-title i {
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .location-instruction {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 1.5rem;
+            border-radius: var(--radius-md);
+            margin-bottom: 2rem;
+            text-align: center;
+            font-weight: 500;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .location-instruction i {
+            font-size: 1.5rem;
+            margin-right: 0.5rem;
+        }
+
+        #map {
+            height: 500px;
+            width: 100%;
+            border-radius: var(--radius-md);
+            border: 3px solid var(--border-light);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .report-section {
+            background: var(--bg-primary);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            box-shadow: var(--shadow-md);
+            height: fit-content;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid var(--border-light);
+            border-radius: var(--radius-md);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: white;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-control:invalid {
+            border-color: #ef4444;
+        }
+
+        .form-control:valid {
+            border-color: #10b981;
+        }
+
+        textarea.form-control {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: var(--radius-md);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status-message {
+            padding: 1rem;
+            border-radius: var(--radius-md);
+            margin-bottom: 1rem;
+            display: none;
+            font-weight: 500;
+            animation: slideInDown 0.3s ease-out;
+        }
+
+        .status-success {
+            background: #f0fff4;
+            color: #22543d;
+            border: 2px solid #9ae6b4;
+        }
+
+        .status-error {
+            background: #fed7d7;
+            color: #742a2a;
+            border: 2px solid #fc8181;
+        }
+
+        .reports-grid {
+            margin-top: 3rem;
+            grid-column: 1 / -1;
+        }
+
+        .reports-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .report-card {
+            background: white;
+            border-radius: var(--radius-md);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-md);
+            border-left: 4px solid #667eea;
+            transition: all 0.3s ease;
+        }
+
+        .report-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .report-type {
+            font-weight: 700;
+            color: #667eea;
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .report-description {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .report-meta {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+
+        .report-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        /* Success Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 3rem 2rem;
+            border-radius: var(--radius-lg);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: var(--shadow-xl);
+            transform: scale(0.7) translateY(50px);
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.show .modal-content {
+            transform: scale(1) translateY(0);
+        }
+
+        .modal-icon {
+            font-size: 4rem;
+            color: #48bb78;
+            margin-bottom: 1rem;
+            animation: checkmark 0.6s ease-in-out;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .modal-message {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            line-height: 1.5;
+        }
+
+        .modal-btn {
+            background: var(--success-gradient);
+            color: white;
+            border: none;
+            padding: 0.8rem 2rem;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .modal-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(72, 187, 120, 0.4);
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--text-primary);
+            color: white;
+            text-align: center;
+            padding: 2rem;
+            margin-top: 3rem;
+        }
+
+        .footer-content {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .footer p {
+            opacity: 0.8;
+        }
+
+        /* Custom marker styles */
+        .temp-marker {
+            animation: bounce 1s ease-in-out infinite alternate;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes bounce {
+            0% { transform: translateY(0px) scale(1); }
+            100% { transform: translateY(-8px) scale(1.1); }
+        }
+
+        @keyframes checkmark {
+            0% { transform: scale(0) rotate(0deg); }
+            50% { transform: scale(1.2) rotate(180deg); }
+            100% { transform: scale(1) rotate(360deg); }
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3); }
+            50% { box-shadow: 0 10px 40px rgba(102, 126, 234, 0.5); }
+            100% { box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .content-container {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+                padding: 2rem 1rem;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .hero-title {
+                font-size: 2.5rem;
+            }
+
+            .hero-subtitle {
+                font-size: 1.1rem;
+            }
+
+            .navbar {
+                padding: 1rem;
+            }
+
+            .hero {
+                padding: 100px 1rem 40px;
+            }
+
+            #map {
+                height: 400px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hero-title {
+                font-size: 2rem;
+            }
+
+            .section-title {
+                font-size: 1.5rem;
+            }
+
+            .modal-content {
+                padding: 2rem 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="logo">
+                <i class="fas fa-shield-alt"></i>
+                CyberGuard
+            </a>
+            <ul class="nav-links">
+                <li><a href="cyberguard_dashboard.php">Dashboard</a></li>
+                <li><a href="#reports">Reports</a></li>
+                <li><a href="#analytics">Analytics</a></li>
+                <li><a href="#help">Help</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-container">
+            <h1 class="hero-title">Advanced Cybercrime Mapping System</h1>
+            <p class="hero-subtitle">
+                Protect your community by reporting and tracking cybercrime incidents. 
+                Our advanced mapping system helps law enforcement and citizens stay informed about digital threats.
+            </p>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="content-container">
+            <!-- Map Section -->
+            <div class="map-section">
+                <h2 class="section-title">
+                    <i class="fas fa-map-marked-alt"></i>
+                    Interactive Crime Map
+                </h2>
+                
+                <div class="location-instruction">
+                    <i class="fas fa-mouse-pointer"></i>
+                    Click anywhere on the map to select your location for reporting an incident
+                </div>
+
+                <div id="map"></div>
+            </div>
+
+            <!-- Report Section -->
+            <div class="report-section">
+                <h2 class="section-title">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Report Incident
+                </h2>
+
+                <div id="statusMessage" class="status-message"></div>
+
+                <form id="reportForm" novalidate>
+                    <input type="hidden" id="latitude" name="latitude">
+                    <input type="hidden" id="longitude" name="longitude">
+                    
+                    <!-- Personal Information Section -->
+                    <div class="form-group">
+                        <label for="reporter_name">Your Name *</label>
+                        <input type="text" id="reporter_name" name="reporter_name" class="form-control" required 
+                               placeholder="Enter your full name" minlength="2" maxlength="255">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="contact_info">Email or Phone Number *</label>
+                        <input type="text" id="contact_info" name="contact_info" class="form-control" required 
+                               placeholder="Enter your email address or phone number" maxlength="255">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="crime_type">Crime Type *</label>
+                        <select id="crime_type" name="crime_type" class="form-control" required>
+                            <option value="">Select Crime Type</option>
+                            <option value="Identity Theft">🆔 Identity Theft</option>
+                            <option value="Online Fraud">💳 Online Fraud</option>
+                            <option value="Phishing">🎣 Phishing Attack</option>
+                            <option value="Ransomware">🔒 Ransomware</option>
+                            <option value="Cyberbullying">😢 Cyberbullying</option>
+                            <option value="Data Breach">📊 Data Breach</option>
+                            <option value="Social Engineering">🕵️ Social Engineering</option>
+                            <option value="Malware">🦠 Malware</option>
+                            <option value="DDoS Attack">⚡ DDoS Attack</option>
+                            <option value="Other">🔍 Other</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="description">Incident Description *</label>
+                        <textarea id="description" name="description" class="form-control" rows="4" required 
+                                placeholder="Please provide detailed information about the incident, including when it occurred, what happened, and any relevant details..." 
+                                minlength="10" maxlength="2000"></textarea>
+                    </div>
+                    
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-paper-plane"></i>
+                        Submit Report
+                    </button>
+                </form>
+            </div>
+
+            <!-- Reports Grid -->
+            <div class="reports-grid">
+                <h2 class="section-title">
+                    <i class="fas fa-list-alt"></i>
+                    Recent Incident Reports
+                </h2>
+                <div id="reportsContainer" class="reports-container"></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Success Modal -->
+    <div id="successModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h3 class="modal-title">Report Submitted Successfully!</h3>
+            <p class="modal-message">
+                Thank you for helping keep our community safe. Your incident report has been recorded and will be reviewed by our security team.
+            </p>
+            <button class="modal-btn" onclick="closeModal()">
+                <i class="fas fa-thumbs-up"></i> Great!
+            </button>
+        </div>
+    </div>
+    
+    <footer class="footer">
+        <div class="footer-content">
+            <p>&copy; 2025 CyberGuard - Advanced Cybercrime Mapping System. Protecting communities through technology.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Global variables
+        let map;
+        let tempMarker = null;
+        let reports = [];
+        let newReports = [];
+
+        // Crime type colors for markers
+        const crimeColors = {
+            "Identity Theft": "#e53e3e",
+            "Online Fraud": "#dd6b20",
+            "Phishing": "#d69e2e",
+            "Ransomware": "#9f7aea",
+            "Cyberbullying": "#ed64a6",
+            "Data Breach": "#38b2ac",
+            "Social Engineering": "#4299e1",
+            "Malware": "#f56565",
+            "DDoS Attack": "#48bb78",
+            "Other": "#718096"
+        };
+
+        // Initialize map
+        function initializeMap() {
+            try {
+                map = L.map('map').setView([-6.369028, 34.888822], 6);
+                
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors',
+                    maxZoom: 18
+                }).addTo(map);
+
+                // Map click event
+                map.on('click', function(e) {
+                    // Remove existing temporary marker
+                    if (tempMarker) {
+                        map.removeLayer(tempMarker);
+                    }
+
+                    // Add new temporary marker
+                    tempMarker = L.marker([e.latlng.lat, e.latlng.lng], {
+                        icon: L.divIcon({
+                            className: 'temp-marker',
+                            html: '<div style="background-color: #ff4757; width: 25px; height: 25px; border-radius: 50%; border: 4px solid white; box-shadow: 0 3px 12px rgba(255,71,87,0.5);"></div>',
+                            iconSize: [25, 25],
+                            iconAnchor: [12.5, 12.5]
+                        })
+                    }).addTo(map);
+
+                    // Store coordinates
+                    document.getElementById('latitude').value = e.latlng.lat.toFixed(6);
+                    document.getElementById('longitude').value = e.latlng.lng.toFixed(6);
+                    
+                    showMessage(`📍 Location selected: ${e.latlng.lat.toFixed(4)}, ${e.latlng.lng.toFixed(4)}`, 'success');
+                });
+
+                console.log('✅ Map initialized successfully');
+                
+            } catch (error) {
+                console.error('❌ Map initialization error:', error);
+                showMessage('Failed to initialize map. Please refresh the page.', 'error');
+            }
+        }
+
+        // Create custom marker
+        function createCustomMarker(color) {
+            return L.divIcon({
+                className: 'custom-marker',
+                html: '<div style="background-color: ' + color + '; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);"></div>',
+                iconSize: [20, 20],
+                iconAnchor: [10, 10]
+            });
+        }
+
+        // Add markers to map
+        function addMarkersToMap() {
+            try {
+                // Clear existing markers (except temp marker)
+                map.eachLayer(function (layer) {
+                    if (layer instanceof L.Marker && layer !== tempMarker) {
+                        map.removeLayer(layer);
+                    }
+                });
+
+                // Add sample reports
+                reports.forEach(function(report) {
+                    if (report.latitude && report.longitude) {
+                        const color = crimeColors[report.crime_type] || crimeColors["Other"];
+                        L.marker([report.latitude, report.longitude], {
+                            icon: createCustomMarker(color)
+                        })
+                        .addTo(map)
+                        .bindPopup(`
+                            <div style="min-width: 200px;">
+                                <h4 style="color: ${color}; margin-bottom: 8px;">${report.crime_type}</h4>
+                                <p style="margin-bottom: 8px; line-height: 1.4;">${report.description}</p>
+                                <small style="color: #666;">Reported by: ${report.reporter_name}</small><br>
+                                <small style="color: #666;">Lat: ${report.latitude.toFixed(4)}, Lng: ${report.longitude.toFixed(4)}</small>
+                            </div>
+                        `);
+                    }
+                });
+
+                // Add new reports
+                newReports.forEach(function(report) {
+                    if (report.latitude && report.longitude) {
+                        const color = crimeColors[report.crime_type] || crimeColors["Other"];
+                        L.marker([report.latitude, report.longitude], {
+                            icon: createCustomMarker(color)
+                        })
+                        .addTo(map)
+                        .bindPopup(`
+                            <div style="min-width: 200px;">
+                                <h4 style="color: ${color}; margin-bottom: 8px;">${report.crime_type}</h4>
+                                <p style="margin-bottom: 8px; line-height: 1.4;">${report.description}</p>
+                                <small style="color: #666;">Reported by: ${report.reporter_name}</small><br>
+                                <small style="color: #666;">Report #: ${report.report_number}</small><br>
+                                <small style="color: #666;">Lat: ${report.latitude.toFixed(4)}, Lng: ${report.longitude.toFixed(4)}</small>
+                            </div>
+                        `);
+                    }
+                });
+
+                console.log('✅ Markers updated successfully');
+                
+            } catch (error) {
+                console.error('❌ Error updating markers:', error);
+            }
+        }
+
+        // Update reports display
+        function updateReportsDisplay() {
+            try {
+                const container = document.getElementById('reportsContainer');
+                if (!container) return;
+
+                const allReports = [...reports, ...newReports];
+                container.innerHTML = '';
+                
+                if (allReports.length === 0) {
+                    container.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 2rem;">No reports available yet. Submit the first report!</p>';
+                    return;
+                }
+                
+                allReports.forEach(function(report) {
+                    const reportCard = document.createElement('div');
+                    reportCard.className = 'report-card';
+                    reportCard.innerHTML = `
+                        <div class="report-type">${report.crime_type}</div>
+                        <div class="report-description">${report.description}</div>
+                        <div class="report-meta">
+                            <div class="report-meta-item">
+                                <i class="fas fa-user"></i>
+                                ${report.reporter_name}
+                            </div>
+                            <div class="report-meta-item">
+                                <i class="fas fa-map-marker-alt"></i>
+                                ${report.latitude.toFixed(4)}, ${report.longitude.toFixed(4)}
+                            </div>
+                            ${report.report_number ? `
+                            <div class="report-meta-item">
+                                <i class="fas fa-hashtag"></i>
+                                ${report.report_number}
+                            </div>` : ''}
+                        </div>
+                    `;
+                    container.appendChild(reportCard);
+                });
+
+                console.log('✅ Reports display updated');
+                
+            } catch (error) {
+                console.error('❌ Error updating reports display:', error);
+            }
+        }
+
+        // Show status message
+        function showMessage(message, type) {
+            try {
+                const statusDiv = document.getElementById('statusMessage');
+                if (!statusDiv) return;
+
+                statusDiv.textContent = message;
+                statusDiv.className = `status-message status-${type}`;
+                statusDiv.style.display = 'block';
+                
+                // Auto-hide after 5 seconds
+                setTimeout(function() {
+                    statusDiv.style.display = 'none';
+                }, 5000);
+
+                console.log(`📢 Message: ${message} (${type})`);
+                
+            } catch (error) {
+                console.error('❌ Error showing message:', error);
+            }
+        }
+
+        // Show success modal
+        function showSuccessModal() {
+            try {
+                const modal = document.getElementById('successModal');
+                if (modal) {
+                    modal.classList.add('show');
+                }
+            } catch (error) {
+                console.error('❌ Error showing modal:', error);
+            }
+        }
+
+        // Close modal
+        function closeModal() {
+            try {
+                const modal = document.getElementById('successModal');
+                if (modal) {
+                    modal.classList.remove('show');
+                }
+            } catch (error) {
+                console.error('❌ Error closing modal:', error);
+            }
+        }
+
+        // Validate form data
+        function validateForm(data) {
+            const errors = [];
+
+            // Check required fields
+            if (!data.reporter_name || data.reporter_name.trim().length < 2) {
+                errors.push('Name must be at least 2 characters long');
+            }
+
+            if (!data.contact_info || data.contact_info.trim().length < 5) {
+                errors.push('Contact information is required');
+            }
+
+            if (!data.crime_type) {
+                errors.push('Please select a crime type');
+            }
+
+            if (!data.description || data.description.trim().length < 10) {
+                errors.push('Description must be at least 10 characters long');
+            }
+
+            if (!data.latitude || !data.longitude) {
+                errors.push('Please select a location on the map');
+            }
+
+            // Validate coordinates
+            const lat = parseFloat(data.latitude);
+            const lng = parseFloat(data.longitude);
+            if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+                errors.push('Invalid coordinates selected');
+            }
+
+            // Validate email or phone
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            const phoneRegex = /^[\+]?[(]?[0-9\s\-\(\)]{10,}$/;
+            if (!emailRegex.test(data.contact_info) && !phoneRegex.test(data.contact_info)) {
+                errors.push('Please provide a valid email address or phone number');
+            }
+
+            return errors;
+        }
+
+        // Form submission handler
+        function handleFormSubmission() {
+            const form = document.getElementById('reportForm');
+            if (!form) {
+                console.error('❌ Form not found');
+                return;
+            }
+
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                try {
+                    console.log('🚀 Form submission started');
+
+                    // Get form data
+                    const formData = {
+                        reporter_name: document.getElementById('reporter_name').value.trim(),
+                        contact_info: document.getElementById('contact_info').value.trim(),
+                        crime_type: document.getElementById('crime_type').value,
+                        description: document.getElementById('description').value.trim(),
+                        latitude: document.getElementById('latitude').value,
+                        longitude: document.getElementById('longitude').value
+                    };
+
+                    console.log('📝 Form data collected:', formData);
+
+                    // Validate form
+                    const validationErrors = validateForm(formData);
+                    if (validationErrors.length > 0) {
+                        showMessage('Please fix the following errors: ' + validationErrors.join(', '), 'error');
+                        console.error('❌ Validation errors:', validationErrors);
+                        return;
+                    }
+
+                    // Show loading state
+                    const submitBtn = form.querySelector('.btn-primary');
+                    const originalText = submitBtn.innerHTML;
+                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+                    submitBtn.disabled = true;
+
+                    console.log('📡 Sending data to server...');
+
+                    // Submit to backend
+                    fetch('submit_incident.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            reporter_name: formData.reporter_name,
+                            contact_info: formData.contact_info,
+                            crime_type: formData.crime_type,
+                            description: formData.description,
+                            latitude: parseFloat(formData.latitude),
+                            longitude: parseFloat(formData.longitude)
+                        })
+                    })
+                    .then(response => {
+                        console.log('📡 Response status:', response.status);
+                        
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                        }
+                        
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('📦 Server response:', data);
+                        
+                        if (data.success) {
+                            // Remove temporary marker
+                            if (tempMarker) {
+                                map.removeLayer(tempMarker);
+                                tempMarker = null;
+                            }
+                            
+                            // Add to local reports array
+                            const newReport = {
+                                latitude: parseFloat(formData.latitude),
+                                longitude: parseFloat(formData.longitude),
+                                reporter_name: formData.reporter_name,
+                                contact_info: formData.contact_info,
+                                crime_type: formData.crime_type,
+                                description: formData.description,
+                                report_number: data.report_number || 'Processing...'
+                            };
+                            
+                            newReports.push(newReport);
+                            addMarkersToMap();
+                            updateReportsDisplay();
+                            
+                            // Update success modal message
+                            const modalMessage = document.querySelector('.modal-message');
+                            if (modalMessage) {
+                                modalMessage.innerHTML = `
+                                    Thank you for helping keep our community safe. Your incident report has been recorded with reference number <strong>${data.report_number}</strong> and will be reviewed by our security team.
+                                `;
+                            }
+                            
+                            // Show success modal
+                            showSuccessModal();
+                            
+                            // Reset form
+                            form.reset();
+                            document.getElementById('latitude').value = '';
+                            document.getElementById('longitude').value = '';
+                            
+                            console.log('✅ Report submitted successfully:', data.report_number);
+                            
+                        } else {
+                            throw new Error(data.message || 'Submission failed');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('🚨 Submission error:', error);
+                        showMessage(`Failed to submit report: ${error.message}. Please try again.`, 'error');
+                    })
+                    .finally(() => {
+                        // Reset button state
+                        submitBtn.innerHTML = originalText;
+                        submitBtn.disabled = false;
+                    });
+
+                } catch (error) {
+                    console.error('🚨 Form submission error:', error);
+                    showMessage('An unexpected error occurred. Please try again.', 'error');
+                }
+            });
+        }
+
+        // Load existing reports from database
+        function loadExistingReports() {
+            try {
+                console.log('📥 Loading existing reports...');
+                
+                fetch('cyberguard_dashboard.php?api=map_data')
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data && Array.isArray(data) && data.length > 0) {
+                            console.log('✅ Loaded existing reports:', data.length);
+                            
+                            // Convert database format to display format
+                            reports = data.map(report => ({
+                                latitude: parseFloat(report.latitude),
+                                longitude: parseFloat(report.longitude),
+                                crime_type: report.category_name,
+                                description: report.incident_description,
+                                reporter_name: 'Existing Report',
+                                contact_info: 'dashboard',
+                                report_number: report.report_number
+                            }));
+                            
+                            addMarkersToMap();
+                            updateReportsDisplay();
+                        } else {
+                            console.log('ℹ️ No existing reports found');
+                            updateReportsDisplay(); // Show empty state
+                        }
+                    })
+                    .catch(error => {
+                        console.warn('⚠️ Could not load existing reports:', error.message);
+                        console.log('ℹ️ Using sample data as fallback');
+                        
+                        // Use sample data as fallback
+                        reports = [
+                            {
+                                latitude: -6.7924,
+                                longitude: 39.2083,
+                                crime_type: "Online Fraud",
+                                description: "Sophisticated investment scam targeting mobile money users",
+                                reporter_name: "Sample Report",
+                                contact_info: "sample@example.com"
+                            },
+                            {
+                                latitude: -3.3869,
+                                longitude: 36.6830,
+                                crime_type: "Identity Theft",
+                                description: "Unauthorized access to personal banking information",
+                                reporter_name: "Sample Report",
+                                contact_info: "+255 712 345 678"
+                            }
+                        ];
+                        
+                        addMarkersToMap();
+                        updateReportsDisplay();
+                    });
+                    
+            } catch (error) {
+                console.error('❌ Error in loadExistingReports:', error);
+                updateReportsDisplay(); // Show empty state
+            }
+        }
+
+        // Navbar scroll effect
+        function initializeNavbarScroll() {
+            let lastScrollTop = 0;
+            
+            window.addEventListener('scroll', function() {
+                try {
+                    const navbar = document.querySelector('.navbar');
+                    if (!navbar) return;
+
+                    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                    
+                    // Add background effect
+                    if (scrollTop > 50) {
+                        navbar.style.background = 'rgba(255, 255, 255, 0.98)';
+                        navbar.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.1)';
+                    } else {
+                        navbar.style.background = 'rgba(255, 255, 255, 0.95)';
+                        navbar.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.05)';
+                    }
+                    
+                    lastScrollTop = scrollTop;
+                } catch (error) {
+                    console.error('❌ Navbar scroll error:', error);
+                }
+            });
+        }
+
+        // Modal event handlers
+        function initializeModalHandlers() {
+            try {
+                // Close modal when clicking outside
+                const modal = document.getElementById('successModal');
+                if (modal) {
+                    modal.addEventListener('click', function(e) {
+                        if (e.target === this) {
+                            closeModal();
+                        }
+                    });
+                }
+
+                // Close modal with Escape key
+                document.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape') {
+                        closeModal();
+                    }
+                });
+            } catch (error) {
+                console.error('❌ Modal handlers error:', error);
+            }
+        }
+
+        // Form validation handlers
+        function initializeFormValidation() {
+            try {
+                const form = document.getElementById('reportForm');
+                if (!form) return;
+
+                // Real-time validation
+                const inputs = form.querySelectorAll('.form-control');
+                inputs.forEach(input => {
+                    input.addEventListener('blur', function() {
+                        validateField(this);
+                    });
+
+                    input.addEventListener('input', function() {
+                        // Clear error state on input
+                        this.classList.remove('invalid');
+                    });
+                });
+
+                function validateField(field) {
+                    const value = field.value.trim();
+                    let isValid = true;
+
+                    switch (field.id) {
+                        case 'reporter_name':
+                            isValid = value.length >= 2;
+                            break;
+                        case 'contact_info':
+                            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                            const phoneRegex = /^[\+]?[(]?[0-9\s\-\(\)]{10,}$/;
+                            isValid = emailRegex.test(value) || phoneRegex.test(value);
+                            break;
+                        case 'crime_type':
+                            isValid = value !== '';
+                            break;
+                        case 'description':
+                            isValid = value.length >= 10;
+                            break;
+                    }
+
+                    if (field.hasAttribute('required') && !isValid) {
+                        field.classList.add('invalid');
+                    } else {
+                        field.classList.remove('invalid');
+                    }
+                }
+            } catch (error) {
+                console.error('❌ Form validation error:', error);
+            }
+        }
+
+        // Initialize everything when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            try {
+                console.log('🚀 Initializing CyberGuard application...');
+                
+                // Initialize all components
+                initializeMap();
+                handleFormSubmission();
+                loadExistingReports();
+                initializeNavbarScroll();
+                initializeModalHandlers();
+                initializeFormValidation();
+                
+                console.log('✅ CyberGuard application initialized successfully!');
+                console.log('📊 Ready to submit reports to database');
+                console.log('🗺️ Map initialized with Tanzania focus');
+                
+            } catch (error) {
+                console.error('🚨 Initialization error:', error);
+                showMessage('Application initialization failed. Please refresh the page.', 'error');
+            }
+        });
+
+        // Global error handler
+        window.addEventListener('error', function(e) {
+            console.error('🚨 Global error:', e.error);
+        });
+
+        // Unhandled promise rejection handler
+        window.addEventListener('unhandledrejection', function(e) {
+            console.error('🚨 Unhandled promise rejection:', e.reason);
+        });
+
+    </script>
+</body>
+</html>
